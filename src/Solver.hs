@@ -23,7 +23,7 @@ genOcc :: [Variable] -> [Constraint] -> Occurrences
 genOcc [] _ = M.empty
 genOcc (v:vs) cs = M.insert v (filter appearsFree cs) (genOcc vs cs)
     where
-        appearsFree (Constraint _ _ e2) = v `elem` (freeVars e2)
+        appearsFree (Constraint _ _ e2) = v `elem` freeVars e2
 
 solve' :: [Constraint] -> PartialSolution -> Occurrences -> Solution
 solve' [] ps _ = M.map head ps
@@ -41,7 +41,7 @@ discharge (Constraint (Var v) r expr) ps = case M.lookup v ps of
   Just vs -> foldl eliminateFromFv (M.insert v legalVs ps) (zip [0..] fv)
     where
       combinations :: [[Int]]
-      combinations = sequence $ map ((\v -> ps M.! v)) fv
+      combinations = mapM (ps M.!) fv
       
       allSolutions :: M.Map [Int] Int
       allSolutions = foldl (\solutionMap c -> M.insert c (solveAssignment expr (fv, c)) solutionMap) M.empty combinations
@@ -57,17 +57,17 @@ discharge (Constraint (Var v) r expr) ps = case M.lookup v ps of
 
       eliminateFromFv :: PartialSolution -> (Int, Variable) -> PartialSolution
       eliminateFromFv ps (i,v) = 
-        let vs' = foldl (\acc v' -> let fks = filter (\a -> a !! i == v') ks in if (any (`elem` legalVs) (lookupMany fks allSolutions)) then (v':acc) else acc)
+        let vs' = foldl (\acc v' -> let fks = filter (\a -> a !! i == v') ks in if any (`elem` legalVs) (lookupMany fks allSolutions) then v':acc else acc)
                         []
                         (fromJust $ M.lookup v ps)
         in M.insert v vs' ps
 discharge _ _ = error "Constraint is not in NF"
 
 lookupMany :: (Ord k) => [k] -> M.Map k a -> [a]
-lookupMany ks m = mapMaybe (\k -> M.lookup k m) ks
+lookupMany ks m = mapMaybe (`M.lookup` m) ks
 
 solveAssignment :: Expression -> Assignment -> Int
-solveAssignment expr (vars, vals) = solveExpr $ foldl (\e a -> (uncurry $ instantiate e) a) expr (zip vars vals)
+solveAssignment expr (vars, vals) = solveExpr $ foldl (uncurry . instantiate) expr (zip vars vals)
 
 solveExpr :: Expression -> Int
 solveExpr (Const i) = i

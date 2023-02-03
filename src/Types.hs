@@ -6,11 +6,10 @@ module Types (
   , Variable
   ) where
 
-import Data.Text (Text)
+import Data.Text (Text, pack)
 
 import Data.String (IsString, fromString)
 import Data.Void (Void)
-import Data.Text (pack)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -43,13 +42,13 @@ parseConstraint :: Parser Constraint
 parseConstraint = Constraint <$> lexeme parseExpression <*> lexeme parseRelation <*> lexeme parseExpression
 
 parseExpression :: Parser Expression
-parseExpression = (try parseComposite) <|> parseLit
+parseExpression = try parseComposite <|> parseLit
 
 parseLit :: Parser Expression
 parseLit = parseConst <|> parseVariable
 
 parseVariable :: Parser Expression
-parseVariable = Var <$> pack <$> (many letterChar)
+parseVariable = Var . pack <$> many letterChar
 
 parseConst :: Parser Expression
 parseConst = Const <$> L.decimal

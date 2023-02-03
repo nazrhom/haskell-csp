@@ -5,8 +5,8 @@ import qualified Data.Map as M
 
 main :: IO ()
 main = do
-  putStrLn $ show s1
-  putStrLn $ show s2
+  print s1
+  print s2
 
 vars :: [Variable]
 vars = ["a", "b", "c", "d", "e", "f", "g"]
@@ -30,4 +30,3 @@ s1 = solve [ "a = b + c" ] $ M.fromList $ zip ["a", "b", "c"] (repeat [1..5])
 
 s2 :: Solution
 s2 = solve constraints initial
-
